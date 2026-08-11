@@ -51,7 +51,7 @@ std::vector<float> renderSine(bool aliasMode)
     parameters.mix = 1.0f;
     parameters.outputDb = 0.0f;
     parameters.aliasMode = aliasMode;
-    parameters.oversampleMode = true;
+    parameters.substepMode = true;
     dsp.prepare(48000.0, 512, 1);
     dsp.setTargets(parameters);
     dsp.reset();
@@ -99,16 +99,64 @@ int main()
         test_support::check(guardedDc < 0.02f, "DC guard removes sustained offset");
         test_support::check(unguardedDc > guardedDc + 0.05f, "DC guard materially changes biased transfer");
 
-        auto oversampled = renderSine(false);
+        auto substepped = renderSine(false);
         auto aliased = renderSine(true);
         float difference = 0.0f;
-        for (std::size_t i = 0; i < oversampled.size(); ++i)
+        for (std::size_t i = 0; i < substepped.size(); ++i)
         {
-            test_support::check(std::isfinite(oversampled[i]), "oversampled path remains finite");
+            test_support::check(std::isfinite(substepped[i]), "substep path remains finite");
             test_support::check(std::isfinite(aliased[i]), "alias path remains finite");
-            difference += std::abs(oversampled[i] - aliased[i]);
+            difference += std::abs(substepped[i] - aliased[i]);
         }
-        test_support::check(difference > 1.0f, "deliberate alias mode differs from oversampled mode");
+        test_support::check(difference > 1.0f, "deliberate alias mode differs from substep mode");
+
+        FoldKnifeDSP stereo;
+        FoldKnifeDSP::Parameters initial;
+        initial.drive = 0.05f;
+        initial.fold = 0.15f;
+        initial.substepMode = true;
+        initial.dcGuard = false;
+        stereo.prepare(48000.0, 64, 2);
+        stereo.setTargets(initial);
+        stereo.reset();
+        FoldKnifeDSP::Parameters stepped = initial;
+        stepped.drive = 1.0f;
+        stepped.fold = 0.95f;
+        stepped.bias = 0.2f;
+        stepped.symmetry = 0.8f;
+        stereo.setTargets(stepped);
+        std::array<float, 96> left {};
+        std::array<float, 96> right {};
+        for (std::size_t i = 0; i < left.size(); ++i)
+        {
+            left[i] = std::sin(static_cast<float>(i) * 0.17f) * 0.7f;
+            right[i] = left[i];
+        }
+        float* stereoChannels[] { left.data(), right.data() };
+        stereo.processBlock(stereoChannels, 2, static_cast<int>(left.size()));
+        for (std::size_t i = 0; i < left.size(); ++i)
+            test_support::check(left[i] == right[i], "identical stereo channels stay identical during automation step");
+
+        FoldKnifeDSP oversized;
+        FoldKnifeDSP::Parameters oversizedParameters;
+        oversizedParameters.drive = 0.6f;
+        oversizedParameters.fold = 0.5f;
+        oversizedParameters.substepMode = false;
+        oversizedParameters.dcGuard = false;
+        oversized.prepare(48000.0, 64, 1);
+        oversized.setTargets(oversizedParameters);
+        oversized.reset();
+        std::array<float, 128> largerBlock {};
+        largerBlock.fill(0.2f);
+        float* monoChannels[] { largerBlock.data() };
+        oversized.processBlock(monoChannels, 1, static_cast<int>(largerBlock.size()));
+        bool processedTail = false;
+        for (std::size_t i = 64; i < largerBlock.size(); ++i)
+        {
+            test_support::check(std::isfinite(largerBlock[i]), "larger-than-prepare tail remains finite");
+            processedTail = processedTail || std::abs(largerBlock[i]) > 0.0001f;
+        }
+        test_support::check(processedTail, "larger-than-prepare tail is processed, not cleared");
 
         FoldKnifeDSP a;
         FoldKnifeDSP b;
@@ -117,6 +165,7 @@ int main()
         parameters.fold = 0.83f;
         parameters.symmetry = 0.12f;
         parameters.aliasMode = false;
+        parameters.substepMode = true;
         a.prepare(44100.0, 128, 2);
         b.prepare(44100.0, 128, 2);
         a.setTargets(parameters);

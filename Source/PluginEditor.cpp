@@ -39,7 +39,7 @@ void styleButton(juce::ToggleButton& button, const juce::String& name, const juc
 
 FoldKnifeAudioProcessorEditor::FoldKnifeAudioProcessorEditor(FoldKnifeAudioProcessor& p)
     : AudioProcessorEditor(&p), ownerProcessor(p),
-      tooltipText("FoldKnife exposes drive, fold shape, clipping, bias, symmetry, gain, antialias controls, DC guard, mix, and output.")
+      tooltipText("FoldKnife exposes drive, fold shape, clipping, bias, symmetry, gain, substep integration, DC guard, mix, and output.")
 {
     setSize(defaultWidth, defaultHeight);
     setResizeLimits(minimumWidth, minimumHeight, defaultWidth * 2, defaultHeight * 2);
@@ -72,12 +72,12 @@ FoldKnifeAudioProcessorEditor::FoldKnifeAudioProcessorEditor(FoldKnifeAudioProce
     clipModeBox.setColour(juce::ComboBox::textColourId, juce::Colour(0xfff0f0f0));
     clipModeBox.setColour(juce::ComboBox::outlineColourId, juce::Colour(0xff707070));
 
-    styleButton(aliasButton, "Alias", "foldknife-alias-control", "Bypass oversampled smoothing for deliberate DHN aliasing.");
-    styleButton(oversampleButton, "4x OS", "foldknife-oversample-control", "Enable the default 4x oversampled nonlinear path.");
+    styleButton(aliasButton, "Alias", "foldknife-alias-control", "Bypass 4-substep integration for deliberate DHN aliasing.");
+    styleButton(substepButton, "4x Step", "foldknife-substep-control", "Enable four interpolated nonlinear substeps per sample.");
     styleButton(dcGuardButton, "DC Guard", "foldknife-dc-guard-control", "Remove low-frequency bias after asymmetric folding.");
 
     controls = { &driveSlider, &foldSlider, &clipModeBox, &biasSlider, &symmetrySlider, &preGainSlider,
-                 &postToneSlider, &aliasButton, &oversampleButton, &dcGuardButton, &mixSlider, &outputSlider };
+                 &postToneSlider, &aliasButton, &substepButton, &dcGuardButton, &mixSlider, &outputSlider };
     for (auto* control : controls)
         addAndMakeVisible(control);
 
@@ -91,7 +91,7 @@ FoldKnifeAudioProcessorEditor::FoldKnifeAudioProcessorEditor(FoldKnifeAudioProce
     outputAttachment = std::make_unique<SliderAttachment>(ownerProcessor.parameters, foldknife::parameters::output, outputSlider);
     clipModeAttachment = std::make_unique<ComboBoxAttachment>(ownerProcessor.parameters, foldknife::parameters::clipMode, clipModeBox);
     aliasAttachment = std::make_unique<ButtonAttachment>(ownerProcessor.parameters, foldknife::parameters::aliasMode, aliasButton);
-    oversampleAttachment = std::make_unique<ButtonAttachment>(ownerProcessor.parameters, foldknife::parameters::oversampleMode, oversampleButton);
+    substepAttachment = std::make_unique<ButtonAttachment>(ownerProcessor.parameters, foldknife::parameters::substepMode, substepButton);
     dcGuardAttachment = std::make_unique<ButtonAttachment>(ownerProcessor.parameters, foldknife::parameters::dcGuard, dcGuardButton);
 }
 

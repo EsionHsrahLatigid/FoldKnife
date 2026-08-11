@@ -10,7 +10,7 @@ void FoldKnifeDSP::prepare(double sampleRate, int maxBlockSize, int channels)
     sampleRate_ = std::isfinite(sampleRate) && sampleRate > 1000.0 ? sampleRate : 44100.0;
     channels_ = static_cast<int>(clamp(static_cast<float>(channels), 0.0f, static_cast<float>(maxChannels)));
     maxBlockSize_ = static_cast<int>(clamp(static_cast<float>(maxBlockSize), 0.0f, 262144.0f));
-    oversampleScratch_.assign(static_cast<std::size_t>(std::max(1, maxBlockSize_)) * oversampleFactor, 0.0f);
+    substepScratch_.assign(static_cast<std::size_t>(std::max(1, maxBlockSize_)) * substepFactor, 0.0f);
     reset();
 }
 
@@ -31,7 +31,7 @@ void FoldKnifeDSP::setTargets(const Parameters& parameters) noexcept
     target_.preGainDb = clamp(sanitize(parameters.preGainDb), -24.0f, 36.0f);
     target_.postTone = clamp(sanitize(parameters.postTone), 0.0f, 1.0f);
     target_.aliasMode = parameters.aliasMode;
-    target_.oversampleMode = parameters.oversampleMode;
+    target_.substepMode = parameters.substepMode;
     target_.dcGuard = parameters.dcGuard;
     target_.mix = clamp(sanitize(parameters.mix), 0.0f, 1.0f);
     target_.outputDb = clamp(sanitize(parameters.outputDb), -36.0f, 12.0f);
@@ -43,62 +43,23 @@ void FoldKnifeDSP::processBlock(float* const* channelData, int numChannels, int 
         return;
 
     const int boundedChannels = std::min(numChannels, maxChannels);
-    const int boundedSamples = std::min(numSamples, maxBlockSize_ > 0 ? maxBlockSize_ : numSamples);
-
-    for (int channel = 0; channel < boundedChannels; ++channel)
+    for (int sample = 0; sample < numSamples; ++sample)
     {
-        auto* samples = channelData[channel];
-        if (samples == nullptr)
-            continue;
-
-        for (int sample = 0; sample < boundedSamples; ++sample)
-            samples[sample] = processSampleForTest(samples[sample], channel);
-
-        for (int sample = boundedSamples; sample < numSamples; ++sample)
-            samples[sample] = 0.0f;
+        advanceSmoothers();
+        const auto frameParameters = current_;
+        for (int channel = 0; channel < boundedChannels; ++channel)
+        {
+            auto* samples = channelData[channel];
+            if (samples != nullptr)
+                samples[sample] = processSampleWithParameters(samples[sample], channel, frameParameters);
+        }
     }
 }
 
 float FoldKnifeDSP::processSampleForTest(float input, int channel) noexcept
 {
-    current_.drive = smooth(current_.drive, target_.drive);
-    current_.fold = smooth(current_.fold, target_.fold);
-    current_.bias = smooth(current_.bias, target_.bias);
-    current_.symmetry = smooth(current_.symmetry, target_.symmetry);
-    current_.preGainDb = smooth(current_.preGainDb, target_.preGainDb);
-    current_.postTone = smooth(current_.postTone, target_.postTone);
-    current_.mix = smooth(current_.mix, target_.mix);
-    current_.outputDb = smooth(current_.outputDb, target_.outputDb);
-    current_.clipMode = target_.clipMode;
-    current_.aliasMode = target_.aliasMode;
-    current_.oversampleMode = target_.oversampleMode;
-    current_.dcGuard = target_.dcGuard;
-
-    const int stateIndex = channel <= 0 ? 0 : 1;
-    input = clamp(sanitize(input), -16.0f, 16.0f);
-    const float dry = input;
-    float wet = 0.0f;
-
-    if (current_.oversampleMode && !current_.aliasMode)
-    {
-        const float previous = state_[stateIndex].lastInput;
-        for (int i = 0; i < oversampleFactor; ++i)
-        {
-            const float t = static_cast<float>(i + 1) / static_cast<float>(oversampleFactor);
-            const float upsampled = previous + (input - previous) * t;
-            wet += processAtRate(upsampled, stateIndex, current_);
-        }
-        wet /= static_cast<float>(oversampleFactor);
-        state_[stateIndex].lastInput = input;
-    }
-    else
-    {
-        wet = processAtRate(input, stateIndex, current_);
-        state_[stateIndex].lastInput = input;
-    }
-
-    const float out = (dry + (wet - dry) * current_.mix) * dbToGain(current_.outputDb);
-    return clamp(sanitize(out), -1.25f, 1.25f);
+    advanceSmoothers();
+    return processSampleWithParameters(input, channel, current_);
 }
 
 float FoldKnifeDSP::foldTransfer(float input, float fold, float bias, float symmetry) noexcept
@@ -162,6 +123,51 @@ float FoldKnifeDSP::applyDcBlock(float input, ChannelState& state) noexcept
     state.dcX1 = input;
     state.dcY1 = sanitize(y);
     return state.dcY1;
+}
+
+void FoldKnifeDSP::advanceSmoothers() noexcept
+{
+    current_.drive = smooth(current_.drive, target_.drive);
+    current_.fold = smooth(current_.fold, target_.fold);
+    current_.bias = smooth(current_.bias, target_.bias);
+    current_.symmetry = smooth(current_.symmetry, target_.symmetry);
+    current_.preGainDb = smooth(current_.preGainDb, target_.preGainDb);
+    current_.postTone = smooth(current_.postTone, target_.postTone);
+    current_.mix = smooth(current_.mix, target_.mix);
+    current_.outputDb = smooth(current_.outputDb, target_.outputDb);
+    current_.clipMode = target_.clipMode;
+    current_.aliasMode = target_.aliasMode;
+    current_.substepMode = target_.substepMode;
+    current_.dcGuard = target_.dcGuard;
+}
+
+float FoldKnifeDSP::processSampleWithParameters(float input, int channel, const Parameters& parameters) noexcept
+{
+    const int stateIndex = channel <= 0 ? 0 : 1;
+    input = clamp(sanitize(input), -16.0f, 16.0f);
+    const float dry = input;
+    float wet = 0.0f;
+
+    if (parameters.substepMode && !parameters.aliasMode)
+    {
+        const float previous = state_[stateIndex].lastInput;
+        for (int i = 0; i < substepFactor; ++i)
+        {
+            const float t = static_cast<float>(i + 1) / static_cast<float>(substepFactor);
+            const float upsampled = previous + (input - previous) * t;
+            wet += processAtRate(upsampled, stateIndex, parameters);
+        }
+        wet /= static_cast<float>(substepFactor);
+        state_[stateIndex].lastInput = input;
+    }
+    else
+    {
+        wet = processAtRate(input, stateIndex, parameters);
+        state_[stateIndex].lastInput = input;
+    }
+
+    const float out = (dry + (wet - dry) * parameters.mix) * dbToGain(parameters.outputDb);
+    return clamp(sanitize(out), -1.25f, 1.25f);
 }
 
 float FoldKnifeDSP::processAtRate(float input, int channel, const Parameters& parameters) noexcept

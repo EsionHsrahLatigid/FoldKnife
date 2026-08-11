@@ -26,7 +26,7 @@ public:
         float preGainDb { 0.0f };
         float postTone { 0.55f };
         bool aliasMode { false };
-        bool oversampleMode { true };
+        bool substepMode { true };
         bool dcGuard { true };
         float mix { 1.0f };
         float outputDb { -3.0f };
@@ -54,7 +54,7 @@ private:
     };
 
     static constexpr int maxChannels = 2;
-    static constexpr int oversampleFactor = 4;
+    static constexpr int substepFactor = 4;
 
     static float sanitize(float value) noexcept;
     static float clamp(float value, float lo, float hi) noexcept;
@@ -62,6 +62,8 @@ private:
     static float smooth(float current, float target) noexcept;
     static float shape(float input, const Parameters& parameters) noexcept;
     static float applyDcBlock(float input, ChannelState& state) noexcept;
+    void advanceSmoothers() noexcept;
+    float processSampleWithParameters(float input, int channel, const Parameters& parameters) noexcept;
     float processAtRate(float input, int channel, const Parameters& parameters) noexcept;
 
     double sampleRate_ { 44100.0 };
@@ -70,6 +72,6 @@ private:
     Parameters current_ {};
     Parameters target_ {};
     std::array<ChannelState, maxChannels> state_ {};
-    std::vector<float> oversampleScratch_;
+    std::vector<float> substepScratch_;
 };
 } // namespace foldknife::dsp

@@ -11,12 +11,12 @@ FoldKnife follows the DHN9 G001 distortion decision: a wavefolder should provide
 
 ## Product Interpretation
 
-Default processing uses a 4x oversampled nonlinear path to reduce obvious foldover compared with single-rate shaping. The `aliasMode` parameter intentionally routes to the single-rate shaper for Digital Harsh Noise material where aliasing is part of the sound. The UI and documentation name this mode directly.
+Default processing uses four interpolated nonlinear substeps per sample, then averages the shaped substeps. This is an intentionally lightweight integration strategy, not filtered oversampling. The `aliasMode` parameter intentionally routes to the single-rate shaper for Digital Harsh Noise material where aliasing is part of the sound. The UI and documentation name this mode directly.
 
 ## Safety Invariants
 
 - Non-finite input is sanitized.
 - Parameters are range-clamped and smoothed inside the DSP core.
-- Oversampling scratch memory is allocated in `prepare`, not in the audio callback.
+- Substep scratch memory is allocated in `prepare`, not in the audio callback.
 - The nonlinear transfer, DC blocker, tone stage, wet/dry blend, and output gain are bounded.
 - Matched mono and stereo layouts are supported; mono-to-stereo and stereo-to-mono layout changes are rejected.

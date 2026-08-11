@@ -38,7 +38,7 @@ private:
     juce::Slider outputSlider;
     juce::ComboBox clipModeBox;
     juce::ToggleButton aliasButton;
-    juce::ToggleButton oversampleButton;
+    juce::ToggleButton substepButton;
     juce::ToggleButton dcGuardButton;
 
     std::unique_ptr<SliderAttachment> driveAttachment;
@@ -51,7 +51,7 @@ private:
     std::unique_ptr<SliderAttachment> outputAttachment;
     std::unique_ptr<ComboBoxAttachment> clipModeAttachment;
     std::unique_ptr<ButtonAttachment> aliasAttachment;
-    std::unique_ptr<ButtonAttachment> oversampleAttachment;
+    std::unique_ptr<ButtonAttachment> substepAttachment;
     std::unique_ptr<ButtonAttachment> dcGuardAttachment;
 
     std::array<juce::Component*, 12> controls {};

@@ -1,6 +1,6 @@
 # FoldKnife
 
-FoldKnife is an EHL Digital Harsh Noise distortion effect built around a 4x oversampled asymmetric wavefolder, hard-clip modes, explicit bias/symmetry controls, DC blocking, and a deliberate alias mode for exposed digital harshness.
+FoldKnife is an EHL Digital Harsh Noise distortion effect built around an asymmetric wavefolder with four interpolated nonlinear substeps per sample, hard-clip modes, explicit bias/symmetry controls, DC blocking, and a deliberate alias mode for exposed digital harshness.
 
 ## Identity
 
@@ -20,8 +20,8 @@ FoldKnife is an EHL Digital Harsh Noise distortion effect built around a 4x over
 - `symmetry`: positive/negative fold balance.
 - `preGain`: extra pre-stage gain in dB.
 - `postTone`: post-folder tone contour.
-- `aliasMode`: intentionally bypasses the oversampled path for DHN alias artifacts.
-- `oversampleMode`: default 4x nonlinear processing path.
+- `aliasMode`: intentionally bypasses substep integration for DHN alias artifacts.
+- `substepMode`: default four-interpolated-substep nonlinear integration path.
 - `dcGuard`: high-pass DC blocker after asymmetric folding.
 - `mix`: wet/dry blend.
 - `output`: final output gain in dB.
@@ -64,7 +64,7 @@ Targets are fixed for CI and humans:
 
 ## Anti-Alias Note
 
-The default mode reduces nonlinear aliasing by processing the wavefolder at 4x and averaging the shaped path, but it is not a mathematically perfect band-limited distortion model. `aliasMode` is deliberately exposed because Digital Harsh Noise sometimes wants audible foldover; it is a named parameter rather than an accidental implementation detail.
+The default mode runs four interpolated nonlinear substeps per sample and averages that shaped path. This can sound smoother than the single-rate alias path, but it is not proper filtered oversampling and is not a mathematically band-limited distortion model. `aliasMode` is deliberately exposed because Digital Harsh Noise sometimes wants audible foldover; it is a named parameter rather than an accidental implementation detail.
 
 ## References
 

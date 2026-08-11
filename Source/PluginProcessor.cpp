@@ -51,7 +51,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout FoldKnifeAudioProcessor::cre
     params.push_back(makeFloat(foldknife::parameters::preGain, "GAIN Pre (dB)", { -24.0f, 36.0f, 0.1f }, 0.0f));
     params.push_back(makeFloat(foldknife::parameters::postTone, "TONE Post", { 0.0f, 1.0f, 0.001f }, 0.55f));
     params.push_back(makeBool(foldknife::parameters::aliasMode, "EDGE Deliberate Alias", false));
-    params.push_back(makeBool(foldknife::parameters::oversampleMode, "EDGE 4x Oversample", true));
+    params.push_back(makeBool(foldknife::parameters::substepMode, "EDGE 4x Substep", true));
     params.push_back(makeBool(foldknife::parameters::dcGuard, "EDGE DC Guard", true));
     params.push_back(makeFloat(foldknife::parameters::mix, "OUTPUT Wet Dry", { 0.0f, 1.0f, 0.001f }, 1.0f));
     params.push_back(makeFloat(foldknife::parameters::output, "OUTPUT Gain (dB)", { -36.0f, 12.0f, 0.1f }, -3.0f));
@@ -103,7 +103,7 @@ foldknife::dsp::FoldKnifeDSP::Parameters FoldKnifeAudioProcessor::readDspParamet
     values.preGainDb = parameters.getRawParameterValue(foldknife::parameters::preGain)->load();
     values.postTone = parameters.getRawParameterValue(foldknife::parameters::postTone)->load();
     values.aliasMode = parameters.getRawParameterValue(foldknife::parameters::aliasMode)->load() >= 0.5f;
-    values.oversampleMode = parameters.getRawParameterValue(foldknife::parameters::oversampleMode)->load() >= 0.5f;
+    values.substepMode = parameters.getRawParameterValue(foldknife::parameters::substepMode)->load() >= 0.5f;
     values.dcGuard = parameters.getRawParameterValue(foldknife::parameters::dcGuard)->load() >= 0.5f;
     values.mix = parameters.getRawParameterValue(foldknife::parameters::mix)->load();
     values.outputDb = parameters.getRawParameterValue(foldknife::parameters::output)->load();

@@ -4,6 +4,6 @@ The UI uses the DHN9 monochrome 8-bit system: 8 px grid, grayscale palette, proc
 
 Every parameter has a visible custom control attached to APVTS, plus a component ID, accessible name/title/description, tooltip, and keyboard focus. The editor is custom JUCE UI code.
 
-The audio callback owns no file, network, logging, lock, or heap allocation work in steady state. `FoldKnifeDSP::prepare` sizes the oversampling scratch buffer and resets per-channel state; `processBlock` uses fixed channel pointers and bounded loops only.
+The audio callback owns no file, network, logging, lock, or heap allocation work in steady state. `FoldKnifeDSP::prepare` sizes the substep scratch buffer and resets per-channel state; `processBlock` uses fixed channel pointers and bounded frame-major loops only.
 
 The transfer-curve motif is rendered procedurally from the live fold, bias, and symmetry parameter values so the product identity remains visible without bundled assets.

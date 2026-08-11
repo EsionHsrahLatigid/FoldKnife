@@ -40,7 +40,7 @@ int main()
         const char* ids[] = {
             foldknife::parameters::drive, foldknife::parameters::fold, foldknife::parameters::clipMode,
             foldknife::parameters::bias, foldknife::parameters::symmetry, foldknife::parameters::preGain,
-            foldknife::parameters::postTone, foldknife::parameters::aliasMode, foldknife::parameters::oversampleMode,
+            foldknife::parameters::postTone, foldknife::parameters::aliasMode, foldknife::parameters::substepMode,
             foldknife::parameters::dcGuard, foldknife::parameters::mix, foldknife::parameters::output
         };
         for (const auto* id : ids)
