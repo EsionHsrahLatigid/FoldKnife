@@ -7,6 +7,11 @@
 #include <cmath>
 #include <string>
 
+struct EditorTestAccess
+{
+    static void refresh(FoldKnifeAudioProcessorEditor& editor) { editor.timerCallback(); }
+};
+
 namespace
 {
 void checkPaintContract(juce::AudioProcessorEditor& editor, int width, int height)
@@ -85,10 +90,9 @@ void setSliderToNormalized(FoldKnifeAudioProcessor& processor, juce::Slider& sli
     slider.setValue(parameter->convertFrom0to1(normalized), juce::sendNotificationSync);
 }
 
-void dispatchEditorTimer()
+void dispatchEditorTimer(FoldKnifeAudioProcessorEditor& editor)
 {
-    juce::Thread::sleep(40);
-    juce::Timer::callPendingTimersSynchronously();
+    EditorTestAccess::refresh(editor);
 }
 
 void checkMaximumLayout(juce::AudioProcessorEditor& editor)
@@ -168,7 +172,7 @@ int main()
         requireSlider(*editor, "foldknife-mix-control");
         requireSlider(*editor, "foldknife-output-control");
 
-        dispatchEditorTimer();
+        dispatchEditorTimer(*custom);
         auto values = display->getValues();
         test_support::check(nearlyEqual(values[0], parameterNormalizedValue(processor, foldknife::parameters::drive, 0.45f)), "display reads default drive");
         test_support::check(nearlyEqual(values[1], parameterNormalizedValue(processor, foldknife::parameters::fold, 0.62f)), "display reads default fold");
@@ -179,7 +183,7 @@ int main()
         setSliderToNormalized(processor, fold, foldknife::parameters::fold, 0.5f);
         setSliderToNormalized(processor, bias, foldknife::parameters::bias, 1.0f);
         setSliderToNormalized(processor, symmetry, foldknife::parameters::symmetry, 0.25f);
-        dispatchEditorTimer();
+        dispatchEditorTimer(*custom);
         values = display->getValues();
         test_support::check(nearlyEqual(values[0], 0.0f) && nearlyEqual(values[1], 0.5f)
                                 && nearlyEqual(values[2], 1.0f) && nearlyEqual(values[3], 0.25f),
