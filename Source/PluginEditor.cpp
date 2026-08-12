@@ -14,12 +14,12 @@ void styleSlider(juce::Slider& slider, const juce::String& name, const juce::Str
     slider.setComponentID(id);
     slider.setTooltip(tooltip);
     slider.setWantsKeyboardFocus(true);
-    slider.setColour(juce::Slider::trackColourId, juce::Colour(0xffd8d8d8));
-    slider.setColour(juce::Slider::thumbColourId, juce::Colour(0xffffffff));
-    slider.setColour(juce::Slider::backgroundColourId, juce::Colour(0xff202020));
-    slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xfff0f0f0));
-    slider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xff080808));
-    slider.setColour(juce::Slider::textBoxOutlineColourId, juce::Colour(0xff707070));
+    slider.setColour(juce::Slider::trackColourId, juce::Colour(0xfff2f2f0));
+    slider.setColour(juce::Slider::thumbColourId, juce::Colour(0xfff2f2f0));
+    slider.setColour(juce::Slider::backgroundColourId, juce::Colour(0xff2a2a2a));
+    slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xfff2f2f0));
+    slider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xff050505));
+    slider.setColour(juce::Slider::textBoxOutlineColourId, juce::Colour(0xff8a8a86));
 }
 
 void styleButton(juce::ToggleButton& button, const juce::String& name, const juce::String& id, const juce::String& tooltip)
@@ -31,9 +31,9 @@ void styleButton(juce::ToggleButton& button, const juce::String& name, const juc
     button.setComponentID(id);
     button.setTooltip(tooltip);
     button.setWantsKeyboardFocus(true);
-    button.setColour(juce::ToggleButton::textColourId, juce::Colour(0xfff0f0f0));
-    button.setColour(juce::ToggleButton::tickColourId, juce::Colour(0xffffffff));
-    button.setColour(juce::ToggleButton::tickDisabledColourId, juce::Colour(0xff505050));
+    button.setColour(juce::ToggleButton::textColourId, juce::Colour(0xfff2f2f0));
+    button.setColour(juce::ToggleButton::tickColourId, juce::Colour(0xfff2f2f0));
+    button.setColour(juce::ToggleButton::tickDisabledColourId, juce::Colour(0xff8a8a86));
 }
 } // namespace
 
@@ -41,7 +41,6 @@ FoldKnifeAudioProcessorEditor::FoldKnifeAudioProcessorEditor(FoldKnifeAudioProce
     : AudioProcessorEditor(&p), ownerProcessor(p),
       tooltipText("FoldKnife exposes drive, fold shape, clipping, bias, symmetry, gain, substep integration, DC guard, mix, and output.")
 {
-    setSize(defaultWidth, defaultHeight);
     setResizeLimits(minimumWidth, minimumHeight, defaultWidth * 2, defaultHeight * 2);
     setResizable(true, true);
     setName("FoldKnife editor");
@@ -68,9 +67,9 @@ FoldKnifeAudioProcessorEditor::FoldKnifeAudioProcessorEditor(FoldKnifeAudioProce
     clipModeBox.setComponentID("foldknife-clip-mode-control");
     clipModeBox.setTooltip("Select folded transfer, hard clip, or folded hard clip.");
     clipModeBox.setWantsKeyboardFocus(true);
-    clipModeBox.setColour(juce::ComboBox::backgroundColourId, juce::Colour(0xff080808));
-    clipModeBox.setColour(juce::ComboBox::textColourId, juce::Colour(0xfff0f0f0));
-    clipModeBox.setColour(juce::ComboBox::outlineColourId, juce::Colour(0xff707070));
+    clipModeBox.setColour(juce::ComboBox::backgroundColourId, juce::Colour(0xff050505));
+    clipModeBox.setColour(juce::ComboBox::textColourId, juce::Colour(0xfff2f2f0));
+    clipModeBox.setColour(juce::ComboBox::outlineColourId, juce::Colour(0xff8a8a86));
 
     styleButton(aliasButton, "Alias", "foldknife-alias-control", "Bypass 4-substep integration for deliberate DHN aliasing.");
     styleButton(substepButton, "4x Step", "foldknife-substep-control", "Enable four interpolated nonlinear substeps per sample.");
@@ -93,6 +92,8 @@ FoldKnifeAudioProcessorEditor::FoldKnifeAudioProcessorEditor(FoldKnifeAudioProce
     aliasAttachment = std::make_unique<ButtonAttachment>(ownerProcessor.parameters, foldknife::parameters::aliasMode, aliasButton);
     substepAttachment = std::make_unique<ButtonAttachment>(ownerProcessor.parameters, foldknife::parameters::substepMode, substepButton);
     dcGuardAttachment = std::make_unique<ButtonAttachment>(ownerProcessor.parameters, foldknife::parameters::dcGuard, dcGuardButton);
+
+    setSize(defaultWidth, defaultHeight);
 }
 
 void FoldKnifeAudioProcessorEditor::paint(juce::Graphics& g)
@@ -100,63 +101,40 @@ void FoldKnifeAudioProcessorEditor::paint(juce::Graphics& g)
     const auto area = getLocalBounds();
     g.fillAll(juce::Colour(0xff050505));
 
-    const auto grid = 8;
-    g.setColour(juce::Colour(0xff202020));
-    for (int x = 0; x < area.getWidth(); x += grid)
-        g.drawVerticalLine(x, 0.0f, static_cast<float>(area.getHeight()));
-    for (int y = 0; y < area.getHeight(); y += grid)
-        g.drawHorizontalLine(y, 0.0f, static_cast<float>(area.getWidth()));
+    g.setColour(juce::Colour(0xfff2f2f0));
+    g.setFont(juce::FontOptions(24.0f));
+    g.drawText("FoldKnife", 32, 16, area.getWidth() - 64, 32, juce::Justification::centredLeft);
 
-    g.setColour(juce::Colour(0xffe8e8e8));
-    g.setFont(juce::FontOptions(32.0f, juce::Font::bold));
-    g.drawText("FoldKnife", 32, 24, area.getWidth() - 64, 48, juce::Justification::centredLeft);
-    g.setFont(juce::FontOptions(16.0f));
-    g.drawText("jp.ehl.foldknife / FdKn", 34, 74, area.getWidth() - 68, 24, juce::Justification::centredLeft);
+    g.setColour(juce::Colour(0xff8a8a86));
+    g.setFont(juce::FontOptions(12.0f));
+    g.drawText("DISTORTION", 32, 48, area.getWidth() - 64, 16, juce::Justification::centredLeft);
 
-    const auto motif = area.reduced(32).removeFromRight(area.getWidth() / 3);
-    g.setColour(juce::Colour(0xffd8d8d8));
-    g.drawRect(motif, 2);
-
-    const auto fold = ownerProcessor.parameters.getRawParameterValue(foldknife::parameters::fold)->load();
-    const auto bias = ownerProcessor.parameters.getRawParameterValue(foldknife::parameters::bias)->load();
-    const auto symmetry = ownerProcessor.parameters.getRawParameterValue(foldknife::parameters::symmetry)->load();
-    juce::Path curve;
-    for (int x = 0; x < motif.getWidth(); x += 8)
-    {
-        const float normalized = static_cast<float>(x) / static_cast<float>(juce::jmax(1, motif.getWidth() - 1));
-        const float in = normalized * 2.0f - 1.0f;
-        const float out = foldknife::dsp::FoldKnifeDSP::foldTransfer(in, fold, bias, symmetry);
-        const float px = static_cast<float>(motif.getX() + x);
-        const float py = static_cast<float>(motif.getCentreY()) - out * static_cast<float>(motif.getHeight()) * 0.42f;
-        if (x == 0)
-            curve.startNewSubPath(px, py);
-        else
-            curve.lineTo(px, py);
-    }
-    g.strokePath(curve, juce::PathStrokeType(3.0f));
-
-    g.setColour(juce::Colour(0xff707070));
-    for (int x = motif.getX(); x < motif.getRight(); x += 24)
-    {
-        const int h = 16 + ((x / 24) % 9) * 8;
-        g.fillRect(x, motif.getBottom() - 16 - h, 8, h);
-    }
+    g.setColour(juce::Colour(0xff2a2a2a));
+    g.drawHorizontalLine(72, 32.0f, static_cast<float>(area.getWidth() - 32));
 }
 
 void FoldKnifeAudioProcessorEditor::resized()
 {
     auto area = getLocalBounds().reduced(32);
-    area.removeFromTop(96);
-    area.removeFromRight(area.getWidth() / 3 + 24);
+    area.removeFromTop(48);
 
-    const int rowHeight = 32;
+    constexpr int columns = 2;
+    constexpr int rows = 6;
+    const int columnGap = 24;
     const int rowGap = 8;
-    for (auto* control : controls)
+    const int columnWidth = (area.getWidth() - columnGap) / columns;
+    const int rowHeight = juce::jmax(32, juce::jmin(44, (area.getHeight() - rowGap * (rows - 1)) / rows));
+
+    for (std::size_t i = 0; i < controls.size(); ++i)
     {
+        auto* control = controls[i];
         if (control == nullptr)
             continue;
-        auto row = area.removeFromTop(rowHeight);
-        control->setBounds(row);
-        area.removeFromTop(rowGap);
+        const int column = static_cast<int>(i / rows);
+        const int row = static_cast<int>(i % rows);
+        control->setBounds(area.getX() + column * (columnWidth + columnGap),
+                           area.getY() + row * (rowHeight + rowGap),
+                           columnWidth,
+                           rowHeight);
     }
 }
