@@ -72,6 +72,12 @@ FoldKnifeAudioProcessorEditor::FoldKnifeAudioProcessorEditor(FoldKnifeAudioProce
     styleButton(substepButton, "4x Step", "foldknife-substep-control", "Enable four interpolated nonlinear substeps per sample.");
     styleButton(dcGuardButton, "DC Guard", "foldknife-dc-guard-control", "Remove low-frequency bias after asymmetric folding.");
 
+    parameterDisplay.setComponentID("foldknife-parameter-display");
+    parameterDisplay.setName("FoldKnife parameter display");
+    parameterDisplay.setTitle("FoldKnife parameter display");
+    parameterDisplay.setDescription("Quantized display of drive, fold, bias, and symmetry parameter state.");
+    addAndMakeVisible(parameterDisplay);
+
     controls = { &driveSlider, &foldSlider, &clipModeBox, &biasSlider, &symmetrySlider, &preGainSlider,
                  &postToneSlider, &aliasButton, &substepButton, &dcGuardButton, &mixSlider, &outputSlider };
     for (std::size_t i = 0; i < controls.size(); ++i)
@@ -95,11 +101,14 @@ FoldKnifeAudioProcessorEditor::FoldKnifeAudioProcessorEditor(FoldKnifeAudioProce
     substepAttachment = std::make_unique<ButtonAttachment>(ownerProcessor.parameters, foldknife::parameters::substepMode, substepButton);
     dcGuardAttachment = std::make_unique<ButtonAttachment>(ownerProcessor.parameters, foldknife::parameters::dcGuard, dcGuardButton);
 
+    timerCallback();
+    startTimerHz(30);
     setSize(defaultWidth, defaultHeight);
 }
 
 FoldKnifeAudioProcessorEditor::~FoldKnifeAudioProcessorEditor()
 {
+    stopTimer();
     setLookAndFeel(nullptr);
 }
 
@@ -110,9 +119,32 @@ void FoldKnifeAudioProcessorEditor::paint(juce::Graphics& g)
 
 void FoldKnifeAudioProcessorEditor::resized()
 {
+    parameterDisplay.setBounds(design::parameterDisplayArea(getLocalBounds()));
     for (std::size_t i = 0; i < controls.size(); ++i)
     {
         if (controls[i] != nullptr)
             design::layoutLabelledControl(labels[i], *controls[i], design::controlCell(getLocalBounds(), i));
     }
+}
+
+void FoldKnifeAudioProcessorEditor::timerCallback()
+{
+    parameterDisplay.setValues({
+        normalizeSlider(foldknife::parameters::drive, driveSlider),
+        normalizeSlider(foldknife::parameters::fold, foldSlider),
+        normalizeSlider(foldknife::parameters::bias, biasSlider),
+        normalizeSlider(foldknife::parameters::symmetry, symmetrySlider)
+    });
+}
+
+float FoldKnifeAudioProcessorEditor::normalizeControlValue(const char* parameterID, double value) const
+{
+    if (auto* parameter = ownerProcessor.parameters.getParameter(parameterID))
+        return juce::jlimit(0.0f, 1.0f, parameter->convertTo0to1(static_cast<float>(value)));
+    return 0.0f;
+}
+
+float FoldKnifeAudioProcessorEditor::normalizeSlider(const char* parameterID, const juce::Slider& slider) const
+{
+    return normalizeControlValue(parameterID, slider.getValue());
 }

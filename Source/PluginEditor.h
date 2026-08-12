@@ -6,7 +6,8 @@
 
 class FoldKnifeAudioProcessor;
 
-class FoldKnifeAudioProcessorEditor final : public juce::AudioProcessorEditor
+class FoldKnifeAudioProcessorEditor final : public juce::AudioProcessorEditor,
+                                           private juce::Timer
 {
 public:
     explicit FoldKnifeAudioProcessorEditor(FoldKnifeAudioProcessor&);
@@ -22,6 +23,8 @@ public:
     static constexpr int minimumHeight = ehl::juce_design::Metrics::minimumHeight;
 
 private:
+    void timerCallback() override;
+
     FoldKnifeAudioProcessor& ownerProcessor;
     ehl::juce_design::LookAndFeel lookAndFeel;
     juce::String tooltipText;
@@ -42,6 +45,7 @@ private:
     juce::ToggleButton aliasButton;
     juce::ToggleButton substepButton;
     juce::ToggleButton dcGuardButton;
+    ehl::juce_design::ParameterDisplay parameterDisplay { ehl::juce_design::DisplayKind::distortion };
     std::array<juce::Label, 12> labels;
 
     std::unique_ptr<SliderAttachment> driveAttachment;
@@ -58,6 +62,9 @@ private:
     std::unique_ptr<ButtonAttachment> dcGuardAttachment;
 
     std::array<juce::Component*, 12> controls {};
+
+    float normalizeControlValue(const char* parameterID, double value) const;
+    float normalizeSlider(const char* parameterID, const juce::Slider& slider) const;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FoldKnifeAudioProcessorEditor)
 };
