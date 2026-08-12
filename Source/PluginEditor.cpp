@@ -4,36 +4,35 @@
 
 namespace
 {
+namespace design = ehl::juce_design;
+
 void styleSlider(juce::Slider& slider, const juce::String& name, const juce::String& id, const juce::String& tooltip)
 {
-    slider.setSliderStyle(juce::Slider::LinearHorizontal);
-    slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 88, 24);
+    design::styleSlider(slider);
     slider.setName(name);
     slider.setTitle(name);
     slider.setDescription(tooltip);
     slider.setComponentID(id);
     slider.setTooltip(tooltip);
-    slider.setWantsKeyboardFocus(true);
-    slider.setColour(juce::Slider::trackColourId, juce::Colour(0xfff2f2f0));
-    slider.setColour(juce::Slider::thumbColourId, juce::Colour(0xfff2f2f0));
-    slider.setColour(juce::Slider::backgroundColourId, juce::Colour(0xff2a2a2a));
-    slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xfff2f2f0));
-    slider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xff050505));
-    slider.setColour(juce::Slider::textBoxOutlineColourId, juce::Colour(0xff8a8a86));
 }
 
 void styleButton(juce::ToggleButton& button, const juce::String& name, const juce::String& id, const juce::String& tooltip)
 {
+    design::styleToggle(button);
     button.setButtonText(name);
     button.setName(name);
     button.setTitle(name);
     button.setDescription(tooltip);
     button.setComponentID(id);
     button.setTooltip(tooltip);
-    button.setWantsKeyboardFocus(true);
-    button.setColour(juce::ToggleButton::textColourId, juce::Colour(0xfff2f2f0));
-    button.setColour(juce::ToggleButton::tickColourId, juce::Colour(0xfff2f2f0));
-    button.setColour(juce::ToggleButton::tickDisabledColourId, juce::Colour(0xff8a8a86));
+}
+
+void styleLabel(juce::Label& label, const juce::String& name)
+{
+    design::styleLabel(label);
+    label.setText(name.toUpperCase(), juce::dontSendNotification);
+    label.setName(name);
+    label.setInterceptsMouseClicks(false, false);
 }
 } // namespace
 
@@ -41,7 +40,8 @@ FoldKnifeAudioProcessorEditor::FoldKnifeAudioProcessorEditor(FoldKnifeAudioProce
     : AudioProcessorEditor(&p), ownerProcessor(p),
       tooltipText("FoldKnife exposes drive, fold shape, clipping, bias, symmetry, gain, substep integration, DC guard, mix, and output.")
 {
-    setResizeLimits(minimumWidth, minimumHeight, defaultWidth * 2, defaultHeight * 2);
+    setLookAndFeel(&lookAndFeel);
+    setResizeLimits(minimumWidth, minimumHeight, design::Metrics::maximumWidth, design::Metrics::maximumHeight);
     setResizable(true, true);
     setName("FoldKnife editor");
     setComponentID("foldknife-editor");
@@ -61,15 +61,12 @@ FoldKnifeAudioProcessorEditor::FoldKnifeAudioProcessorEditor(FoldKnifeAudioProce
     clipModeBox.addItem("Fold", 1);
     clipModeBox.addItem("Hard Clip", 2);
     clipModeBox.addItem("Fold Clip", 3);
+    design::styleComboBox(clipModeBox);
     clipModeBox.setName("Clip Mode");
     clipModeBox.setTitle("Clip Mode");
     clipModeBox.setDescription("Select folded transfer, hard clip, or folded hard clip.");
     clipModeBox.setComponentID("foldknife-clip-mode-control");
     clipModeBox.setTooltip("Select folded transfer, hard clip, or folded hard clip.");
-    clipModeBox.setWantsKeyboardFocus(true);
-    clipModeBox.setColour(juce::ComboBox::backgroundColourId, juce::Colour(0xff050505));
-    clipModeBox.setColour(juce::ComboBox::textColourId, juce::Colour(0xfff2f2f0));
-    clipModeBox.setColour(juce::ComboBox::outlineColourId, juce::Colour(0xff8a8a86));
 
     styleButton(aliasButton, "Alias", "foldknife-alias-control", "Bypass 4-substep integration for deliberate DHN aliasing.");
     styleButton(substepButton, "4x Step", "foldknife-substep-control", "Enable four interpolated nonlinear substeps per sample.");
@@ -77,8 +74,13 @@ FoldKnifeAudioProcessorEditor::FoldKnifeAudioProcessorEditor(FoldKnifeAudioProce
 
     controls = { &driveSlider, &foldSlider, &clipModeBox, &biasSlider, &symmetrySlider, &preGainSlider,
                  &postToneSlider, &aliasButton, &substepButton, &dcGuardButton, &mixSlider, &outputSlider };
-    for (auto* control : controls)
-        addAndMakeVisible(control);
+    for (std::size_t i = 0; i < controls.size(); ++i)
+    {
+        jassert(controls[i] != nullptr);
+        styleLabel(labels[i], controls[i]->getName());
+        addAndMakeVisible(labels[i]);
+        addAndMakeVisible(controls[i]);
+    }
 
     driveAttachment = std::make_unique<SliderAttachment>(ownerProcessor.parameters, foldknife::parameters::drive, driveSlider);
     foldAttachment = std::make_unique<SliderAttachment>(ownerProcessor.parameters, foldknife::parameters::fold, foldSlider);
@@ -96,45 +98,21 @@ FoldKnifeAudioProcessorEditor::FoldKnifeAudioProcessorEditor(FoldKnifeAudioProce
     setSize(defaultWidth, defaultHeight);
 }
 
+FoldKnifeAudioProcessorEditor::~FoldKnifeAudioProcessorEditor()
+{
+    setLookAndFeel(nullptr);
+}
+
 void FoldKnifeAudioProcessorEditor::paint(juce::Graphics& g)
 {
-    const auto area = getLocalBounds();
-    g.fillAll(juce::Colour(0xff050505));
-
-    g.setColour(juce::Colour(0xfff2f2f0));
-    g.setFont(juce::FontOptions(24.0f));
-    g.drawText("FoldKnife", 32, 16, area.getWidth() - 64, 32, juce::Justification::centredLeft);
-
-    g.setColour(juce::Colour(0xff8a8a86));
-    g.setFont(juce::FontOptions(12.0f));
-    g.drawText("DISTORTION", 32, 48, area.getWidth() - 64, 16, juce::Justification::centredLeft);
-
-    g.setColour(juce::Colour(0xff2a2a2a));
-    g.drawHorizontalLine(72, 32.0f, static_cast<float>(area.getWidth() - 32));
+    design::paintEditorChrome(g, getLocalBounds(), "FoldKnife", "DISTORTION");
 }
 
 void FoldKnifeAudioProcessorEditor::resized()
 {
-    auto area = getLocalBounds().reduced(32);
-    area.removeFromTop(48);
-
-    constexpr int columns = 2;
-    constexpr int rows = 6;
-    const int columnGap = 24;
-    const int rowGap = 8;
-    const int columnWidth = (area.getWidth() - columnGap) / columns;
-    const int rowHeight = juce::jmax(32, juce::jmin(44, (area.getHeight() - rowGap * (rows - 1)) / rows));
-
     for (std::size_t i = 0; i < controls.size(); ++i)
     {
-        auto* control = controls[i];
-        if (control == nullptr)
-            continue;
-        const int column = static_cast<int>(i / rows);
-        const int row = static_cast<int>(i % rows);
-        control->setBounds(area.getX() + column * (columnWidth + columnGap),
-                           area.getY() + row * (rowHeight + rowGap),
-                           columnWidth,
-                           rowHeight);
+        if (controls[i] != nullptr)
+            design::layoutLabelledControl(labels[i], *controls[i], design::controlCell(getLocalBounds(), i));
     }
 }
