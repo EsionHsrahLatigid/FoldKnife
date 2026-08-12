@@ -10,9 +10,11 @@ namespace
 void checkPaintContract(juce::AudioProcessorEditor& editor, int width, int height)
 {
     juce::Image image(juce::Image::RGB, width, height, true);
-    juce::Graphics g(image);
     editor.setBounds(0, 0, width, height);
-    editor.paint(g);
+    {
+        juce::Graphics g(image);
+        editor.paint(g);
+    }
 
     const auto background = ehl::juce_design::Palette::ink();
     const auto divider = ehl::juce_design::Palette::low();
