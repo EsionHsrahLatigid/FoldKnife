@@ -1,6 +1,6 @@
 # FoldKnife Research Notes
 
-FoldKnife follows the DHN9 G001 distortion decision: a wavefolder should provide a sharp folded transfer identity, hard clipping must be available as a distinct mode, and aliasing should be controlled by default but deliberately exposable.
+FoldKnife centers on a sharp folded transfer curve: hard clipping is available as a distinct mode, and aliasing is controlled by default but deliberately exposable.
 
 ## Source Mapping
 
@@ -11,7 +11,7 @@ FoldKnife follows the DHN9 G001 distortion decision: a wavefolder should provide
 
 ## Product Interpretation
 
-Default processing uses four interpolated nonlinear substeps per sample, then averages the shaped substeps. This is an intentionally lightweight integration strategy, not filtered oversampling. The `aliasMode` parameter intentionally routes to the single-rate shaper for Digital Harsh Noise material where aliasing is part of the sound. The UI and documentation name this mode directly.
+Default processing uses four interpolated nonlinear substeps per sample, then averages the shaped substeps. This is an intentionally lightweight integration strategy, not filtered oversampling. The `aliasMode` parameter intentionally routes to the single-rate shaper when audible foldover is part of the sound. The UI and documentation name this mode directly.
 
 ## Safety Invariants
 

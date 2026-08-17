@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(FoldKnife VERSION 0.1.0 LANGUAGES C CXX)
+project(FoldKnife VERSION 0.1.1 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -73,7 +73,7 @@ if(FOLDKNIFE_BUILD_PLUGIN)
         COMPANY_NAME "EsionHsrahLatigid"
         BUNDLE_ID "jp.ehl.foldknife"
         PRODUCT_NAME "FoldKnife"
-        DESCRIPTION "asymmetric wavefold distortion for digital harsh noise"
+        DESCRIPTION "asymmetric wavefolder with substep nonlinear processing and deliberate alias modes"
         PLUGIN_MANUFACTURER_CODE EHL_
         PLUGIN_CODE FdKn
         FORMATS ${FOLDKNIFE_FORMATS}
