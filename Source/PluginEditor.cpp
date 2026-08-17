@@ -68,7 +68,7 @@ FoldKnifeAudioProcessorEditor::FoldKnifeAudioProcessorEditor(FoldKnifeAudioProce
     clipModeBox.setComponentID("foldknife-clip-mode-control");
     clipModeBox.setTooltip("Select folded transfer, hard clip, or folded hard clip.");
 
-    styleButton(aliasButton, "Alias", "foldknife-alias-control", "Bypass 4-substep integration for deliberate DHN aliasing.");
+    styleButton(aliasButton, "Alias", "foldknife-alias-control", "Bypass 4-substep integration for deliberate aliasing.");
     styleButton(substepButton, "4x Step", "foldknife-substep-control", "Enable four interpolated nonlinear substeps per sample.");
     styleButton(dcGuardButton, "DC Guard", "foldknife-dc-guard-control", "Remove low-frequency bias after asymmetric folding.");
 
